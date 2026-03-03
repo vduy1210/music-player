@@ -143,6 +143,37 @@ class MusicPlayer {
         }
     }
 
+    // Rename track in database
+    async renameTrack(index) {
+        const track = this.tracks[index];
+        if (!track) return;
+
+        const newTitle = prompt('Enter new name:', track.title);
+        if (!newTitle || newTitle.trim() === '' || newTitle === track.title) return;
+
+        const trimmedTitle = newTitle.trim();
+
+        try {
+            if (this.useDatabase && this.dbManager && track.id) {
+                await this.dbManager.updateTrack(track.id, { title: trimmedTitle });
+            }
+            
+            this.tracks[index].title = trimmedTitle;
+            
+            // Update player display if this is the current track
+            if (index === this.currentTrack) {
+                const titleEl = document.querySelector('.track-title');
+                if (titleEl) titleEl.textContent = trimmedTitle;
+            }
+            
+            this.renderTrackList();
+            this.showNotification(`✏️ Renamed to: ${trimmedTitle}`);
+        } catch (error) {
+            console.error('❌ Rename failed:', error);
+            this.showNotification('❌ Rename failed');
+        }
+    }
+
     // Delete track from database and storage
     async deleteTrack(index) {
         const track = this.tracks[index];
@@ -656,6 +687,7 @@ class MusicPlayer {
                 </div>
                 <div class="track-duration">${track.duration}</div>
                 <button class="play-track-btn" title="Play">▶</button>
+                ${this.useDatabase ? `<button class="rename-track-btn" title="Rename">✏️</button>` : ''}
                 ${this.useDatabase ? `<button class="delete-track-btn" title="Delete">🗑️</button>` : ''}
             `;
             
@@ -667,6 +699,14 @@ class MusicPlayer {
                 e.stopPropagation();
                 this.playTrackByIndex(index);
             });
+
+            const renameBtn = trackItem.querySelector('.rename-track-btn');
+            if (renameBtn) {
+                renameBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.renameTrack(index);
+                });
+            }
 
             const deleteBtn = trackItem.querySelector('.delete-track-btn');
             if (deleteBtn) {
