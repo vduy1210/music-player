@@ -2,6 +2,7 @@
   "name": "interactive-music-player",
   "version": "1.0.0",
   "description": "A modern, responsive music player web application with beautiful UI, real-time database, and smooth animations",
+  "type": "module",
   "main": "index.html",
   "scripts": {
     "start": "echo 'Open index.html in your browser'",
