@@ -1,0 +1,43 @@
+{
+  "name": "interactive-music-player",
+  "version": "1.0.0",
+  "description": "A modern, responsive music player web application with beautiful UI, real-time database, and smooth animations",
+  "main": "index.html",
+  "scripts": {
+    "start": "echo 'Open index.html in your browser'",
+    "dev": "echo 'Use Live Server or similar tool to run locally'",
+    "deploy": "vercel --prod",
+    "test": "echo 'No tests specified yet'"
+  },
+  "keywords": [
+    "music",
+    "player",
+    "audio",
+    "web-app",
+    "javascript",
+    "html5",
+    "css3",
+    "responsive",
+    "music-player",
+    "real-time",
+    "supabase",
+    "vercel",
+    "database"
+  ],
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/music-player.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/music-player/issues"
+  },
+  "homepage": "https://github.com/yourusername/music-player#readme"
+}

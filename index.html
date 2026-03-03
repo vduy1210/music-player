@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player - Interactive Experience</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Database Configuration (Add your Supabase credentials here) -->
+    <script>
+        // Replace these with your Supabase credentials
+        // Get them from: https://app.supabase.com/project/_/settings/api
+        
+        // 1. Project URL (lấy từ Settings → General)
+        window.SUPABASE_URL = 'https://vsyweyjsgypgaayuflrc.supabase.co';
+        
+        // 2. Publishable key MỚI (từ giao diện mới của Supabase)
+        window.SUPABASE_KEY = 'sb_publishable_ar9Qwk23xcpNRxME7QTjbw_gLBWsIjM';
+        
+        // Set to null to use local mode without database
+        // window.SUPABASE_URL = null;
+        // window.SUPABASE_KEY = null;
+    </script>
+
+    <div class="container">
+        <!-- Background Elements -->
+        <div class="background-gradient"></div>
+        <div class="background-shapes">
+            <div class="shape shape1"></div>
+            <div class="shape shape2"></div>
+            <div class="shape shape3"></div>
+        </div>
+
+        <!-- Main Content -->
+        <header>
+            <h1 class="logo">🎵 Music Player</h1>
+            <nav>
+                <button class="nav-btn active" data-view="player">Player</button>
+                <button class="nav-btn" data-view="library">Library</button>
+                <button class="nav-btn" data-view="about">About</button>
+            </nav>
+        </header>
+
+        <!-- Player View -->
+        <main id="player-view" class="view active">
+            <div class="player-card">
+                <!-- Album Art -->
+                <div class="album-art-container">
+                    <div class="album-art">
+                        <div class="vinyl-record">
+                            <div class="vinyl-center"></div>
+                        </div>
+                        <div class="album-cover">
+                            <span class="album-icon">🎧</span>
+                        </div>
+                    </div>
+                    <div class="visualizer">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                </div>
+
+                <!-- Track Info -->
+                <div class="track-info">
+                    <h2 class="track-title">Select a track to play</h2>
+                    <p class="track-artist">Unknown Artist</p>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <span class="time current-time">0:00</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                        <div class="progress-handle"></div>
+                    </div>
+                    <span class="time total-time">0:00</span>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn shuffle-btn" title="Shuffle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn prev-btn" title="Previous">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn play-btn" title="Play">
+                        <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        <svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                            <path d="M6 4h4v16H6zM14 4h4v16h-4z"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn next-btn" title="Next">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn repeat-btn" title="Repeat">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Volume Control -->
+                <div class="volume-control">
+                    <button class="volume-btn" title="Volume">
+                        <svg class="volume-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                        </svg>
+                        <svg class="volume-mute-icon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                            <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                        </svg>
+                    </button>
+                    <input type="range" class="volume-slider" min="0" max="100" value="70">
+                </div>
+            </div>
+        </main>
+
+        <!-- Library View -->
+        <main id="library-view" class="view">
+            <div class="library-container">
+                <div class="library-header">
+                    <h2>Music Library</h2>
+                    <button class="add-track-btn">+ Add Track</button>
+                </div>
+                <div class="track-list">
+                    <!-- Sample Tracks -->
+                    <div class="track-item" data-title="Summer Vibes" data-artist="DJ Sunshine" data-duration="3:45">
+                        <div class="track-number">1</div>
+                        <div class="track-item-info">
+                            <div class="track-item-title">Summer Vibes</div>
+                            <div class="track-item-artist">DJ Sunshine</div>
+                        </div>
+                        <div class="track-duration">3:45</div>
+                        <button class="play-track-btn">▶</button>
+                    </div>
+                    <div class="track-item" data-title="Night Drive" data-artist="The Midnight" data-duration="4:20">
+                        <div class="track-number">2</div>
+                        <div class="track-item-info">
+                            <div class="track-item-title">Night Drive</div>
+                            <div class="track-item-artist">The Midnight</div>
+                        </div>
+                        <div class="track-duration">4:20</div>
+                        <button class="play-track-btn">▶</button>
+                    </div>
+                    <div class="track-item" data-title="Ocean Waves" data-artist="Chill Masters" data-duration="5:12">
+                        <div class="track-number">3</div>
+                        <div class="track-item-info">
+                            <div class="track-item-title">Ocean Waves</div>
+                            <div class="track-item-artist">Chill Masters</div>
+                        </div>
+                        <div class="track-duration">5:12</div>
+                        <button class="play-track-btn">▶</button>
+                    </div>
+                    <div class="track-item" data-title="Electric Dreams" data-artist="Synth Wave" data-duration="3:58">
+                        <div class="track-number">4</div>
+                        <div class="track-item-info">
+                            <div class="track-item-title">Electric Dreams</div>
+                            <div class="track-item-artist">Synth Wave</div>
+                        </div>
+                        <div class="track-duration">3:58</div>
+                        <button class="play-track-btn">▶</button>
+                    </div>
+                    <div class="track-item" data-title="Cosmic Journey" data-artist="Space Explorers" data-duration="6:30">
+                        <div class="track-number">5</div>
+                        <div class="track-item-info">
+                            <div class="track-item-title">Cosmic Journey</div>
+                            <div class="track-item-artist">Space Explorers</div>
+                        </div>
+                        <div class="track-duration">6:30</div>
+                        <button class="play-track-btn">▶</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Upload Modal -->
+            <div class="modal" id="upload-modal">
+                <div class="modal-content">
+                    <span class="close-modal">&times;</span>
+                    <h3>Add Music Track</h3>
+                    <div class="upload-area">
+                        <input type="file" id="audio-file" accept="audio/*" style="display: none;">
+                        <label for="audio-file" class="upload-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                            </svg>
+                            <span>Click to upload audio file</span>
+                            <small>MP3, WAV, OGG supported</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- About View -->
+        <main id="about-view" class="view">
+            <div class="about-container">
+                <h2>About This Player</h2>
+                <p>An interactive music player with a modern, responsive design. Built with HTML, CSS, and JavaScript.</p>
+                <div class="features">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎵</div>
+                        <h3>Play Music</h3>
+                        <p>Upload and play your favorite tracks</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎨</div>
+                        <h3>Beautiful UI</h3>
+                        <p>Modern design with smooth animations</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h3>Responsive</h3>
+                        <p>Works perfectly on all devices</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Audio Element -->
+        <audio id="audio-player"></audio>
+    </div>
+
+    <!-- Load Database Manager first -->
+    <script src="assets/js/database.js"></script>
+    <!-- Then load main script -->
+    <script src="assets/js/script.js"></script>
+</body>
+</html>
