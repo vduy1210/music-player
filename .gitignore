@@ -44,6 +44,12 @@ build/
 .env.test.local
 .env.production.local
 
+# Ignore Supabase/API keys in JS or config
+assets/js/supabase-keys.js
+lib/supabase-keys.js
+supabase-keys.txt
+api-keys.txt
+
 # Temporary files
 tmp/
 temp/

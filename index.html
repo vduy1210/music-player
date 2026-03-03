@@ -12,18 +12,13 @@
 <body>
     <!-- Database Configuration (Add your Supabase credentials here) -->
     <script>
-        // Replace these with your Supabase credentials
-        // Get them from: https://app.supabase.com/project/_/settings/api
-        
-        // 1. Project URL (lấy từ Settings → General)
-        window.SUPABASE_URL = 'https://vsyweyjsgypgaayuflrc.supabase.co';
-        
-        // 2. Publishable key MỚI (từ giao diện mới của Supabase)
-        window.SUPABASE_KEY = 'sb_publishable_ar9Qwk23xcpNRxME7QTjbw_gLBWsIjM';
-        
-        // Set to null to use local mode without database
-        // window.SUPABASE_URL = null;
-        // window.SUPABASE_KEY = null;
+        // Supabase credentials are loaded from environment variables or a separate JS file (not committed to Git)
+        // For local development, create a file: assets/js/supabase-keys.js
+        // Example content:
+        //   window.SUPABASE_URL = 'https://your-project.supabase.co';
+        //   window.SUPABASE_KEY = 'your-anon-or-publishable-key';
+        // Ensure assets/js/supabase-keys.js is listed in .gitignore
+        // For production, use environment variables (Vercel, Netlify, etc.)
     </script>
 
     <div class="container">
