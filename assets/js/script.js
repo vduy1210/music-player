@@ -475,8 +475,13 @@ class MusicPlayer {
         const file = e.target.files[0];
         if (!file) return;
         
-        if (!file.type.startsWith('audio/')) {
-            alert('Please select an audio file!');
+        const allowedTypes = ['audio/', 'video/mp4', 'video/webm', 'video/ogg'];
+        const allowedExts = ['.mp3', '.mp4', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.wma', '.webm'];
+        const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+        const isAllowed = allowedTypes.some(t => file.type.startsWith(t)) || allowedExts.includes(fileExt);
+        
+        if (!isAllowed) {
+            alert('Unsupported file format! Supported: MP3, MP4, WAV, OGG, FLAC, AAC, M4A, WEBM');
             return;
         }
 

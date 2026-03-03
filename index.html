@@ -13,7 +13,7 @@
     <!-- Database Configuration -->
     <!-- For local dev: loads supabase-keys.js (not committed to Git) -->
     <!-- For production (Vercel): fetches from /api/config endpoint -->
-    <script src="assets/js/supabase-keys.js?v=2" onerror="console.log('📌 No local keys file, will fetch from API')"></script>
+    <script src="assets/js/supabase-keys.js?v=3" onerror="console.log('📌 No local keys file, will fetch from API')"></script>
     <script>
         // If keys not loaded from local file, fetch from Vercel API
         (async function() {
@@ -205,13 +205,13 @@
                     <span class="close-modal">&times;</span>
                     <h3>Add Music Track</h3>
                     <div class="upload-area">
-                        <input type="file" id="audio-file" accept="audio/*" style="display: none;">
+                        <input type="file" id="audio-file" accept="audio/*,video/mp4,video/webm,video/ogg,.mp3,.mp4,.wav,.ogg,.flac,.aac,.m4a,.wma,.webm" style="display: none;">
                         <label for="audio-file" class="upload-label">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
                             </svg>
-                            <span>Click to upload audio file</span>
-                            <small>MP3, WAV, OGG supported</small>
+                            <span>Click to upload media file</span>
+                            <small>MP3, MP4, WAV, OGG, FLAC, AAC, M4A, WEBM supported</small>
                         </label>
                     </div>
                 </div>
@@ -248,8 +248,8 @@
     </div>
 
     <!-- Load Database Manager first -->
-    <script src="assets/js/database.js?v=2"></script>
+    <script src="assets/js/database.js?v=3"></script>
     <!-- Then load main script -->
-    <script src="assets/js/script.js?v=2"></script>
+    <script src="assets/js/script.js?v=3"></script>
 </body>
 </html>
