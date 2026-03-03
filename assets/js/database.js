@@ -86,6 +86,25 @@ class DatabaseManager {
         return true;
     }
 
+    // Delete audio file from Supabase Storage
+    async deleteAudioFile(fileName) {
+        if (!this.supabaseUrl || !this.supabaseKey) return;
+
+        try {
+            const deleteUrl = `${this.supabaseUrl}/storage/v1/object/music-files/${fileName}`;
+            const response = await fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${this.supabaseKey}`,
+                    'apikey': this.supabaseKey
+                }
+            });
+            console.log('🗑️ Storage delete status:', response.status);
+        } catch (error) {
+            console.warn('⚠️ Failed to delete file from storage:', error.message);
+        }
+    }
+
     // Upload audio file to Supabase Storage
     async uploadAudio(file) {
         if (!this.supabase) {

@@ -122,8 +122,56 @@ class MusicPlayer {
         const index = this.tracks.findIndex(t => t.id === deletedTrack.id);
         if (index !== -1) {
             this.tracks.splice(index, 1);
+            // Adjust currentTrack index if needed
+            if (this.currentTrack >= this.tracks.length) {
+                this.currentTrack = Math.max(0, this.tracks.length - 1);
+            }
             this.renderTrackList();
             this.showNotification(`🗑️ Track removed: ${deletedTrack.title}`);
+        }
+    }
+
+    // Delete track from database and storage
+    async deleteTrack(index) {
+        const track = this.tracks[index];
+        if (!track) return;
+
+        if (!confirm(`Delete "${track.title}"?`)) return;
+
+        try {
+            this.showNotification('⏳ Deleting track...');
+
+            // Delete file from Storage if it's a Supabase URL
+            if (track.src && track.src.includes('/storage/v1/object/public/music-files/')) {
+                const fileName = track.src.split('/music-files/').pop();
+                await this.dbManager.deleteAudioFile(fileName);
+            }
+
+            // Delete track from database
+            await this.dbManager.deleteTrack(track.id);
+
+            // Remove from local array
+            this.tracks.splice(index, 1);
+
+            // Adjust current track index
+            if (index === this.currentTrack) {
+                this.audio.pause();
+                this.audio.src = '';
+                if (this.tracks.length > 0) {
+                    this.currentTrack = Math.min(index, this.tracks.length - 1);
+                    this.loadTrack(this.currentTrack);
+                } else {
+                    this.currentTrack = 0;
+                }
+            } else if (index < this.currentTrack) {
+                this.currentTrack--;
+            }
+
+            this.renderTrackList();
+            this.showNotification(`🗑️ Deleted: ${track.title}`);
+        } catch (error) {
+            console.error('❌ Delete failed:', error);
+            this.showNotification('❌ Failed to delete track');
         }
     }
 
@@ -595,7 +643,8 @@ class MusicPlayer {
                     <div class="track-item-artist">${track.artist}</div>
                 </div>
                 <div class="track-duration">${track.duration}</div>
-                <button class="play-track-btn">▶</button>
+                <button class="play-track-btn" title="Play">▶</button>
+                ${this.useDatabase ? `<button class="delete-track-btn" title="Delete">🗑️</button>` : ''}
             `;
             
             trackList.appendChild(trackItem);
@@ -606,6 +655,14 @@ class MusicPlayer {
                 e.stopPropagation();
                 this.playTrackByIndex(index);
             });
+
+            const deleteBtn = trackItem.querySelector('.delete-track-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.deleteTrack(index);
+                });
+            }
             
             trackItem.addEventListener('click', () => this.playTrackByIndex(index));
         });

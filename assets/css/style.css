@@ -608,6 +608,32 @@ nav {
     transform: scale(1.1);
 }
 
+.delete-track-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 70, 70, 0.15);
+    color: #ff4646;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0;
+    margin-left: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.track-item:hover .delete-track-btn {
+    opacity: 1;
+}
+
+.delete-track-btn:hover {
+    background: rgba(255, 70, 70, 0.35);
+    transform: scale(1.1);
+}
+
 /* Modal */
 .modal {
     display: none;
