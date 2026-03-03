@@ -518,7 +518,8 @@ class MusicPlayer {
             
         } catch (error) {
             console.error('Upload error:', error);
-            this.showNotification('❌ Upload failed. Try local mode.');
+            console.error('Error details:', error.message, error.statusCode, JSON.stringify(error));
+            this.showNotification('❌ Upload failed: ' + (error.message || 'Unknown error'));
             this.uploadLocally(file);
         }
     }
