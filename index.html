@@ -1,19 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Music Player - Upload, play and manage your music collection online. Supports MP3, MP4, WAV, OGG, FLAC, AAC, M4A, WEBM.">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Music Player">
+    <meta property="og:description" content="Upload, play and manage your music collection online">
+    <meta property="og:type" content="website">
+    
     <title>Music Player - Interactive Experience</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+    
+    <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Database Configuration -->
     <!-- For local dev: loads supabase-keys.js (not committed to Git) -->
     <!-- For production (Vercel): fetches from /api/config endpoint -->
-    <script src="assets/js/supabase-keys.js?v=3" onerror="console.log('📌 No local keys file, will fetch from API')"></script>
+    <script src="assets/js/supabase-keys.js?v=4" onerror="console.log('📌 No local keys file, will fetch from API')"></script>
     <script>
         // If keys not loaded from local file, fetch from Vercel API
         window._supabaseConfigReady = (async function() {
@@ -149,53 +166,31 @@
                     <h2>Music Library</h2>
                     <button class="add-track-btn">+ Add Track</button>
                 </div>
+                
+                <!-- Search Bar -->
+                <div class="search-bar">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="text" class="search-input" placeholder="Search tracks...">
+                    <span class="track-count">0 tracks</span>
+                </div>
+
+                <!-- Loading State -->
+                <div class="library-loading" id="library-loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading tracks...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div class="library-empty" id="library-empty" style="display: none;">
+                    <div class="empty-icon">🎵</div>
+                    <h3>No tracks yet</h3>
+                    <p>Upload your first track to get started!</p>
+                </div>
+
                 <div class="track-list">
-                    <!-- Sample Tracks -->
-                    <div class="track-item" data-title="Summer Vibes" data-artist="DJ Sunshine" data-duration="3:45">
-                        <div class="track-number">1</div>
-                        <div class="track-item-info">
-                            <div class="track-item-title">Summer Vibes</div>
-                            <div class="track-item-artist">DJ Sunshine</div>
-                        </div>
-                        <div class="track-duration">3:45</div>
-                        <button class="play-track-btn">▶</button>
-                    </div>
-                    <div class="track-item" data-title="Night Drive" data-artist="The Midnight" data-duration="4:20">
-                        <div class="track-number">2</div>
-                        <div class="track-item-info">
-                            <div class="track-item-title">Night Drive</div>
-                            <div class="track-item-artist">The Midnight</div>
-                        </div>
-                        <div class="track-duration">4:20</div>
-                        <button class="play-track-btn">▶</button>
-                    </div>
-                    <div class="track-item" data-title="Ocean Waves" data-artist="Chill Masters" data-duration="5:12">
-                        <div class="track-number">3</div>
-                        <div class="track-item-info">
-                            <div class="track-item-title">Ocean Waves</div>
-                            <div class="track-item-artist">Chill Masters</div>
-                        </div>
-                        <div class="track-duration">5:12</div>
-                        <button class="play-track-btn">▶</button>
-                    </div>
-                    <div class="track-item" data-title="Electric Dreams" data-artist="Synth Wave" data-duration="3:58">
-                        <div class="track-number">4</div>
-                        <div class="track-item-info">
-                            <div class="track-item-title">Electric Dreams</div>
-                            <div class="track-item-artist">Synth Wave</div>
-                        </div>
-                        <div class="track-duration">3:58</div>
-                        <button class="play-track-btn">▶</button>
-                    </div>
-                    <div class="track-item" data-title="Cosmic Journey" data-artist="Space Explorers" data-duration="6:30">
-                        <div class="track-number">5</div>
-                        <div class="track-item-info">
-                            <div class="track-item-title">Cosmic Journey</div>
-                            <div class="track-item-artist">Space Explorers</div>
-                        </div>
-                        <div class="track-duration">6:30</div>
-                        <button class="play-track-btn">▶</button>
-                    </div>
+                    <!-- Tracks rendered dynamically by JS -->
                 </div>
             </div>
 
@@ -204,15 +199,22 @@
                 <div class="modal-content">
                     <span class="close-modal">&times;</span>
                     <h3>Add Music Track</h3>
-                    <div class="upload-area">
-                        <input type="file" id="audio-file" accept="audio/*,video/mp4,video/webm,video/ogg,.mp3,.mp4,.wav,.ogg,.flac,.aac,.m4a,.wma,.webm" style="display: none;">
+                    <div class="upload-area" id="drop-zone">
+                        <input type="file" id="audio-file" accept="audio/*,video/mp4,video/webm,video/ogg,.mp3,.mp4,.wav,.ogg,.flac,.aac,.m4a,.wma,.webm" multiple style="display: none;">
                         <label for="audio-file" class="upload-label">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
                             </svg>
-                            <span>Click to upload media file</span>
+                            <span>Click or drag files here</span>
                             <small>MP3, MP4, WAV, OGG, FLAC, AAC, M4A, WEBM supported</small>
                         </label>
+                        <!-- Upload Progress -->
+                        <div class="upload-progress" id="upload-progress" style="display: none;">
+                            <div class="upload-progress-bar">
+                                <div class="upload-progress-fill"></div>
+                            </div>
+                            <span class="upload-progress-text">Uploading...</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -239,6 +241,26 @@
                         <h3>Responsive</h3>
                         <p>Works perfectly on all devices</p>
                     </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">☁️</div>
+                        <h3>Cloud Storage</h3>
+                        <p>Your music synced across devices</p>
+                    </div>
+                </div>
+                
+                <!-- Keyboard Shortcuts -->
+                <div class="shortcuts-section">
+                    <h3>⌨️ Keyboard Shortcuts</h3>
+                    <div class="shortcuts-grid">
+                        <div class="shortcut-item"><kbd>Space</kbd> <span>Play / Pause</span></div>
+                        <div class="shortcut-item"><kbd>←</kbd> <span>Previous Track</span></div>
+                        <div class="shortcut-item"><kbd>→</kbd> <span>Next Track</span></div>
+                        <div class="shortcut-item"><kbd>↑</kbd> <span>Volume Up</span></div>
+                        <div class="shortcut-item"><kbd>↓</kbd> <span>Volume Down</span></div>
+                        <div class="shortcut-item"><kbd>M</kbd> <span>Mute / Unmute</span></div>
+                        <div class="shortcut-item"><kbd>S</kbd> <span>Toggle Shuffle</span></div>
+                        <div class="shortcut-item"><kbd>R</kbd> <span>Toggle Repeat</span></div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -248,8 +270,8 @@
     </div>
 
     <!-- Load Database Manager first -->
-    <script src="assets/js/database.js?v=3"></script>
+    <script src="assets/js/database.js?v=4"></script>
     <!-- Then load main script -->
-    <script src="assets/js/script.js?v=3"></script>
+    <script src="assets/js/script.js?v=4"></script>
 </body>
 </html>
