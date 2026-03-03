@@ -48,7 +48,14 @@ class MusicPlayer {
     async loadTracksFromDatabase() {
         try {
             const dbTracks = await this.dbManager.getTracks();
-            this.tracks = dbTracks.map(track => ({
+            // Filter out tracks with invalid URLs (local://, empty, etc.)
+            const validTracks = dbTracks.filter(track => {
+                if (!track.audio_url) return false;
+                if (track.audio_url.startsWith('local://')) return false;
+                return track.audio_url.startsWith('http://') || track.audio_url.startsWith('https://');
+            });
+            
+            this.tracks = validTracks.map(track => ({
                 id: track.id,
                 title: track.title,
                 artist: track.artist,
@@ -57,6 +64,11 @@ class MusicPlayer {
                 coverImage: track.cover_image_url
             }));
             this.renderTrackList();
+            
+            const skipped = dbTracks.length - validTracks.length;
+            if (skipped > 0) {
+                console.warn(`⚠️ Skipped ${skipped} tracks with invalid URLs`);
+            }
             console.log(`📚 Loaded ${this.tracks.length} tracks from database`);
         } catch (error) {
             console.error('Error loading tracks:', error);
@@ -559,12 +571,14 @@ class MusicPlayer {
                 // Try uploading audio file to Supabase Storage
                 audioUrl = await this.dbManager.uploadAudio(file);
             } catch (storageError) {
-                console.warn('⚠️ Storage upload failed, saving track with placeholder URL:', storageError.message);
-                // Use a placeholder - track metadata still saved to DB
-                audioUrl = `local://${file.name}`;
+                console.error('❌ Storage upload failed:', storageError.message);
+                this.showNotification('❌ Upload to storage failed: ' + storageError.message);
+                // Don't save to database with broken URL - just play locally
+                this.uploadLocally(file);
+                return;
             }
 
-            // Add track to database
+            // Add track to database (only if we have a valid storage URL)
             const trackData = {
                 title: fileName,
                 artist: 'Unknown Artist',
@@ -573,20 +587,8 @@ class MusicPlayer {
             };
             
             await this.dbManager.addTrack(trackData);
-            this.showNotification('✅ Track saved to database!');
+            this.showNotification('✅ Track uploaded successfully!');
             this.closeUploadModal();
-            
-            // Also add locally for immediate playback
-            if (audioUrl.startsWith('local://')) {
-                const blobUrl = URL.createObjectURL(file);
-                this.tracks.push({
-                    title: fileName,
-                    artist: 'Unknown Artist',
-                    duration: duration,
-                    src: blobUrl
-                });
-                this.renderTrackList();
-            }
             
         } catch (error) {
             console.error('Upload error:', error);
