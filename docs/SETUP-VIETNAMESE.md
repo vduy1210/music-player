@@ -74,23 +74,14 @@ Màn hình sẽ hiện: "Success. No rows returned"
 
 ### Cách 1: Test local trước
 
-1. Mở file `index.html`
-2. Tìm đoạn code:
-   ```html
-   <script>
-       window.SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
-       window.SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
-   </script>
+1. Mở file `assets/js/supabase-keys.js`
+2. Thay thế bằng thông tin Supabase của bạn:
+   ```javascript
+   window.SUPABASE_URL = 'https://xxxxx.supabase.co';
+   window.SUPABASE_KEY = 'eyJhbGc...';
    ```
 
-3. Thay thế bằng thông tin của bạn:
-   ```html
-   <script>
-       window.SUPABASE_URL = 'https://xxxxx.supabase.co';
-       window.SUPABASE_KEY = 'eyJhbGc...';
-   </script>
-   ```
-
+3. File này đã được ignore bởi `.gitignore` nên sẽ **không bị push lên GitHub**
 4. Mở `index.html` bằng trình duyệt
 5. Mở Console (F12)
 6. Nếu thành công, bạn sẽ thấy:
@@ -99,7 +90,7 @@ Màn hình sẽ hiện: "Success. No rows returned"
    📚 Loaded X tracks from database
    ```
 
-### Cách 2: Tạo file .env (cho production)
+### Cách 2: Tạo file .env (cho development)
 
 1. Copy file `.env.example` thành `.env`:
    ```bash
@@ -108,8 +99,8 @@ Màn hình sẽ hiện: "Success. No rows returned"
 
 2. Sửa file `.env`:
    ```
-   NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
+   SUPABASE_URL=https://xxxxx.supabase.co
+   SUPABASE_ANON_KEY=eyJhbGc...
    ```
 
 ## Deploy lên Vercel
@@ -121,10 +112,12 @@ Màn hình sẽ hiện: "Success. No rows returned"
    ```bash
    git init
    git add .
-   git commit -m "Add database support"
-   git remote add origin https://github.com/username/music-player.git
+   git commit -m "Initial commit"
+   git remote add origin https://github.com/your-username/music-player.git
    git push -u origin main
    ```
+
+⚠️ **Lưu ý**: File `.env` và `assets/js/supabase-keys.js` đã được `.gitignore` nên **sẽ không bị push lên GitHub**. API keys của bạn sẽ được bảo mật!
 
 ### Bước 2: Import vào Vercel
 
@@ -139,17 +132,21 @@ Màn hình sẽ hiện: "Success. No rows returned"
 Trong màn hình deployment:
 
 1. Click **"Environment Variables"**
-2. Thêm 2 biến:
+2. Thêm 2 biến (nhập **trực tiếp giá trị**, KHÔNG dùng @secret):
    
    **Variable 1:**
-   - Name: `NEXT_PUBLIC_SUPABASE_URL`
-   - Value: `https://xxxxx.supabase.co` (URL của bạn)
+   - Name: `SUPABASE_URL`
+   - Value: `https://xxxxx.supabase.co` (dán trực tiếp URL của bạn)
    
    **Variable 2:**
-   - Name: `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - Value: `eyJhbGc...` (anon key của bạn)
+   - Name: `SUPABASE_ANON_KEY`
+   - Value: `eyJhbGc...` (dán trực tiếp anon key của bạn)
 
 3. Click **"Deploy"**
+
+⚠️ **Quan trọng**: 
+- Nhập **trực tiếp** giá trị URL và Key, **KHÔNG** dùng dạng `@secret-name`
+- Tên biến là `SUPABASE_URL` và `SUPABASE_ANON_KEY` (không có prefix `NEXT_PUBLIC_`)
 
 ### Bước 4: Đợi deploy
 

@@ -1,7 +1,7 @@
 // API Route: Upload audio file
 // Usage: POST /api/upload
 
-import { uploadAudio } from '../../lib/supabase.js'
+import { uploadAudio } from '../lib/supabase.js'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true)

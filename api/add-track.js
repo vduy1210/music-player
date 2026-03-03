@@ -1,7 +1,7 @@
 // API Route: Add new track
 // Usage: POST /api/add-track
 
-import { addTrack } from '../../lib/supabase.js'
+import { addTrack } from '../lib/supabase.js'
 
 export default async function handler(req, res) {
   // Set CORS headers

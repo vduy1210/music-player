@@ -1,7 +1,7 @@
 // API Route: Get all tracks
 // Usage: GET /api/tracks
 
-import { getTracks } from '../../lib/supabase.js'
+import { getTracks } from '../lib/supabase.js'
 
 export default async function handler(req, res) {
   // Set CORS headers

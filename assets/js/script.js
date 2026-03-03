@@ -17,7 +17,11 @@ class MusicPlayer {
 
     // Initialize database connection
     async initializeDatabase() {
-        // Check if database credentials are available
+        // Wait briefly for config to load from API (if needed)
+        if (!window.SUPABASE_URL || !window.SUPABASE_KEY) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
         const supabaseUrl = window.SUPABASE_URL || null;
         const supabaseKey = window.SUPABASE_KEY || null;
 
