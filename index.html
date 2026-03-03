@@ -16,7 +16,7 @@
     <script src="assets/js/supabase-keys.js?v=3" onerror="console.log('📌 No local keys file, will fetch from API')"></script>
     <script>
         // If keys not loaded from local file, fetch from Vercel API
-        (async function() {
+        window._supabaseConfigReady = (async function() {
             if (!window.SUPABASE_URL || !window.SUPABASE_KEY) {
                 try {
                     const res = await fetch('/api/config');
