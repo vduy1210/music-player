@@ -92,48 +92,47 @@ class DatabaseManager {
             throw new Error('Database not initialized');
         }
 
-        // Debug: check bucket exists
-        console.log('🔍 Checking storage buckets...');
-        const { data: buckets, error: bucketError } = await this.supabase.storage.listBuckets();
-        console.log('📦 Buckets:', buckets, 'Error:', bucketError);
-
-        if (bucketError) {
-            throw new Error('Cannot access storage: ' + bucketError.message);
-        }
-
-        const bucketExists = buckets && buckets.some(b => b.name === 'music-files');
-        if (!bucketExists) {
-            throw new Error('Bucket "music-files" does not exist. Please create it in Supabase Dashboard → Storage.');
-        }
-
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `${fileName}`;
 
-        console.log('📤 Uploading file:', filePath, 'Size:', file.size, 'Type:', file.type);
+        console.log('📤 Uploading file via REST API:', fileName, 'Size:', file.size);
 
-        const { data, error } = await this.supabase.storage
-            .from('music-files')
-            .upload(filePath, file, {
-                cacheControl: '3600',
-                upsert: false,
-                contentType: file.type
+        // Use direct REST API instead of client library to avoid "Failed to fetch" issues
+        const uploadUrl = `${this.supabaseUrl}/storage/v1/object/music-files/${fileName}`;
+        
+        try {
+            const response = await fetch(uploadUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.supabaseKey}`,
+                    'apikey': this.supabaseKey,
+                    'Content-Type': file.type,
+                    'x-upsert': 'false'
+                },
+                body: file
             });
 
-        if (error) {
-            console.error('❌ Storage upload error:', JSON.stringify(error));
-            throw error;
+            console.log('📡 Upload response status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Upload response error:', errorText);
+                throw new Error(`Storage upload failed (${response.status}): ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('✅ Upload success:', result);
+
+            // Get public URL
+            const publicUrl = `${this.supabaseUrl}/storage/v1/object/public/music-files/${fileName}`;
+            console.log('🔗 Public URL:', publicUrl);
+            return publicUrl;
+
+        } catch (fetchError) {
+            console.error('❌ REST upload failed:', fetchError.message);
+            // If storage completely fails, return null to use blob URL fallback
+            throw fetchError;
         }
-
-        console.log('✅ Upload success:', data);
-
-        // Get public URL
-        const { data: urlData } = this.supabase.storage
-            .from('music-files')
-            .getPublicUrl(filePath);
-
-        console.log('🔗 Public URL:', urlData.publicUrl);
-        return urlData.publicUrl;
     }
 
     // Subscribe to real-time updates

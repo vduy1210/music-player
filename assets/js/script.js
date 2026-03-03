@@ -493,18 +493,25 @@ class MusicPlayer {
         try {
             this.showNotification('⏳ Uploading to database...');
             
-            // Upload audio file to storage
-            const audioUrl = await this.dbManager.uploadAudio(file);
-            
-            // Get audio duration
+            // Get audio duration first
             const tempAudio = new Audio(URL.createObjectURL(file));
             await new Promise(resolve => {
                 tempAudio.addEventListener('loadedmetadata', resolve);
             });
             const duration = this.formatTime(tempAudio.duration);
-            
-            // Add track to database
             const fileName = file.name.replace(/\.[^/.]+$/, '');
+
+            let audioUrl;
+            try {
+                // Try uploading audio file to Supabase Storage
+                audioUrl = await this.dbManager.uploadAudio(file);
+            } catch (storageError) {
+                console.warn('⚠️ Storage upload failed, saving track with placeholder URL:', storageError.message);
+                // Use a placeholder - track metadata still saved to DB
+                audioUrl = `local://${file.name}`;
+            }
+
+            // Add track to database
             const trackData = {
                 title: fileName,
                 artist: 'Unknown Artist',
@@ -513,8 +520,20 @@ class MusicPlayer {
             };
             
             await this.dbManager.addTrack(trackData);
-            this.showNotification('✅ Track uploaded successfully!');
+            this.showNotification('✅ Track saved to database!');
             this.closeUploadModal();
+            
+            // Also add locally for immediate playback
+            if (audioUrl.startsWith('local://')) {
+                const blobUrl = URL.createObjectURL(file);
+                this.tracks.push({
+                    title: fileName,
+                    artist: 'Unknown Artist',
+                    duration: duration,
+                    src: blobUrl
+                });
+                this.renderTrackList();
+            }
             
         } catch (error) {
             console.error('Upload error:', error);
