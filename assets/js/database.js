@@ -92,24 +92,47 @@ class DatabaseManager {
             throw new Error('Database not initialized');
         }
 
+        // Debug: check bucket exists
+        console.log('🔍 Checking storage buckets...');
+        const { data: buckets, error: bucketError } = await this.supabase.storage.listBuckets();
+        console.log('📦 Buckets:', buckets, 'Error:', bucketError);
+
+        if (bucketError) {
+            throw new Error('Cannot access storage: ' + bucketError.message);
+        }
+
+        const bucketExists = buckets && buckets.some(b => b.name === 'music-files');
+        if (!bucketExists) {
+            throw new Error('Bucket "music-files" does not exist. Please create it in Supabase Dashboard → Storage.');
+        }
+
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `audio/${fileName}`;
+        const filePath = `${fileName}`;
+
+        console.log('📤 Uploading file:', filePath, 'Size:', file.size, 'Type:', file.type);
 
         const { data, error } = await this.supabase.storage
             .from('music-files')
             .upload(filePath, file, {
                 cacheControl: '3600',
-                upsert: false
+                upsert: false,
+                contentType: file.type
             });
 
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Storage upload error:', JSON.stringify(error));
+            throw error;
+        }
+
+        console.log('✅ Upload success:', data);
 
         // Get public URL
         const { data: urlData } = this.supabase.storage
             .from('music-files')
             .getPublicUrl(filePath);
 
+        console.log('🔗 Public URL:', urlData.publicUrl);
         return urlData.publicUrl;
     }
 
