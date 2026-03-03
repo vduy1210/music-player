@@ -586,9 +586,19 @@ class MusicPlayer {
                 audio_url: audioUrl
             };
             
-            await this.dbManager.addTrack(trackData);
+            const result = await this.dbManager.addTrack(trackData);
             this.showNotification('✅ Track uploaded successfully!');
             this.closeUploadModal();
+
+            // Add track to local list immediately for instant display
+            this.tracks.push({
+                id: result.id,
+                title: fileName,
+                artist: 'Unknown Artist',
+                duration: duration,
+                src: audioUrl
+            });
+            this.renderTrackList();
             
         } catch (error) {
             console.error('Upload error:', error);
