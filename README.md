@@ -394,3 +394,4 @@ If you encounter any issues or have questions:
 ---
 
 **Made with ❤️ | Enjoy your music! 🎶**
+P.S.: This is a vibe coding project intended for fun =))) 
