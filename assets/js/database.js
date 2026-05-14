@@ -114,43 +114,63 @@ class DatabaseManager {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-        console.log('📤 Uploading file via REST API:', fileName, 'Size:', file.size);
+        console.log('📤 Uploading file:', fileName, 'Size:', file.size);
 
-        // Use direct REST API instead of client library to avoid "Failed to fetch" issues
-        const uploadUrl = `${this.supabaseUrl}/storage/v1/object/music-files/${fileName}`;
-        
+        // First try using Supabase client SDK (recommended for browsers)
+        const filePath = `audio/${fileName}`;
         try {
-            const response = await fetch(uploadUrl, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.supabaseKey}`,
-                    'apikey': this.supabaseKey,
-                    'Content-Type': file.type,
-                    'x-upsert': 'false'
-                },
-                body: file
-            });
+            const { data: uploadData, error: uploadErr } = await this.supabase.storage
+                .from('music-files')
+                .upload(filePath, file, { contentType: file.type, cacheControl: '3600' });
 
-            console.log('📡 Upload response status:', response.status);
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Upload response error:', errorText);
-                throw new Error(`Storage upload failed (${response.status}): ${errorText}`);
+            if (uploadErr) {
+                throw uploadErr;
             }
 
-            const result = await response.json();
-            console.log('✅ Upload success:', result);
+            // Get public URL via SDK
+            const { data: publicData, error: publicErr } = this.supabase.storage
+                .from('music-files')
+                .getPublicUrl(filePath);
 
-            // Get public URL
-            const publicUrl = `${this.supabaseUrl}/storage/v1/object/public/music-files/${fileName}`;
+            if (publicErr) {
+                console.warn('⚠️ Public URL retrieval failed via SDK:', publicErr.message);
+            }
+
+            const publicUrl = publicData?.publicUrl || `${this.supabaseUrl}/storage/v1/object/public/music-files/${filePath}`;
             console.log('🔗 Public URL:', publicUrl);
             return publicUrl;
+        } catch (sdkError) {
+            console.warn('⚠️ SDK upload failed, falling back to REST upload:', sdkError.message);
 
-        } catch (fetchError) {
-            console.error('❌ REST upload failed:', fetchError.message);
-            // If storage completely fails, return null to use blob URL fallback
-            throw fetchError;
+            // Fallback to REST upload (some environments may allow this)
+            const uploadUrl = `${this.supabaseUrl}/storage/v1/object/music-files/${filePath}`;
+            try {
+                const response = await fetch(uploadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${this.supabaseKey}`,
+                        'apikey': this.supabaseKey,
+                        'Content-Type': file.type,
+                        'x-upsert': 'false'
+                    },
+                    body: file
+                });
+
+                console.log('📡 Upload response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Upload response error:', errorText);
+                    throw new Error(`Storage upload failed (${response.status}): ${errorText}`);
+                }
+
+                const publicUrl = `${this.supabaseUrl}/storage/v1/object/public/music-files/${filePath}`;
+                console.log('🔗 Public URL (REST):', publicUrl);
+                return publicUrl;
+            } catch (fetchError) {
+                console.error('❌ REST upload failed:', fetchError.message);
+                throw fetchError;
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 // API Route: Upload audio file
 // Usage: POST /api/upload
 
-import { uploadAudio } from '../lib/supabase.js'
+import { supabase } from '../lib/supabase.js'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true)
@@ -19,11 +19,28 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     try {
-      // Note: File upload needs multipart/form-data handling
-      // For Vercel, consider using @vercel/blob or Supabase Storage directly from frontend
-      const { file } = req.body
-      const audioUrl = await uploadAudio(file)
-      res.status(201).json({ success: true, url: audioUrl })
+      // Accept JSON body with base64, filename, contentType
+      const { base64, filename, contentType } = req.body || {}
+      if (!base64) {
+        res.status(400).json({ success: false, error: 'Missing base64 payload' })
+        return
+      }
+
+      const buffer = Buffer.from(base64, 'base64')
+      const ext = (filename || 'file').split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const filePath = `audio/${fileName}`
+
+      const { data, error: uploadError } = await supabase.storage
+        .from('music-files')
+        .upload(filePath, buffer, { contentType: contentType || 'application/octet-stream' })
+
+      if (uploadError) throw uploadError
+
+      const { data: publicData } = supabase.storage.from('music-files').getPublicUrl(filePath)
+      const publicUrl = publicData?.publicUrl || null
+
+      res.status(201).json({ success: true, url: publicUrl, publicUrl })
     } catch (error) {
       res.status(500).json({ success: false, error: error.message })
     }

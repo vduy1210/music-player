@@ -26,7 +26,10 @@
     "database"
   ],
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"
+    "@distube/ytdl-core": "^4.16.12",
+    "@distube/ytsr": "^2.0.4",
+    "@supabase/supabase-js": "^2.39.0",
+    "express": "^5.2.1"
   },
   "devDependencies": {
     "vercel": "^33.0.0"
