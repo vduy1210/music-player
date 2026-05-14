@@ -14,6 +14,12 @@ class MusicPlayer {
         this.useDatabase = false;
         this.isDraggingProgress = false;
         
+        // Audio Visualizer properties
+        this.audioContext = null;
+        this.analyser = null;
+        this.dataArray = null;
+        this.sourceNodes = new Map();
+        
         this.initializeElements();
         this.attachEventListeners();
         this.initializeDatabase();
@@ -286,6 +292,7 @@ class MusicPlayer {
         this.progressFill = document.querySelector('.progress-fill');
         this.vinylRecord = document.querySelector('.vinyl-record');
         this.visualizer = document.querySelector('.visualizer');
+        this.bars = document.querySelectorAll('.bar');
         
         // Volume
         this.volumeBtn = document.querySelector('.volume-btn');
@@ -532,6 +539,9 @@ class MusicPlayer {
             this.updatePlayButton();
             this.vinylRecord.classList.add('playing');
             this.visualizer.classList.add('playing');
+            
+            // Start Visualizer
+            this.startVisualizer(active);
         } else {
             // Demo mode - simulate playing
             this.isPlaying = true;
@@ -1420,6 +1430,77 @@ class MusicPlayer {
         
         this.updateTrackCount();
         this.renderPlaylist();
+    }
+
+    // Audio Visualizer Logic
+    initAudioContext() {
+        if (this.audioContext) return true;
+        
+        try {
+            window.AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContext();
+            this.analyser = this.audioContext.createAnalyser();
+            this.analyser.fftSize = 64; // Smaller for fewer bars
+            this.analyser.smoothingTimeConstant = 0.8;
+            
+            const bufferLength = this.analyser.frequencyBinCount;
+            this.dataArray = new Uint8Array(bufferLength);
+            
+            return true;
+        } catch (e) {
+            console.warn('Web Audio API not supported:', e);
+            return false;
+        }
+    }
+
+    startVisualizer(element) {
+        if (!this.initAudioContext()) return;
+        
+        // Resume context if suspended (browser policy)
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+
+        // Connect element to analyser if not already connected
+        if (!this.sourceNodes.has(element)) {
+            try {
+                const source = this.audioContext.createMediaElementSource(element);
+                source.connect(this.analyser);
+                this.analyser.connect(this.audioContext.destination);
+                this.sourceNodes.set(element, source);
+            } catch (e) {
+                console.warn('Could not connect audio source:', e);
+            }
+        }
+
+        this.animateVisualizer();
+    }
+
+    animateVisualizer() {
+        if (!this.isPlaying || !this.analyser) return;
+
+        this.analyser.getByteFrequencyData(this.dataArray);
+        
+        // Map frequency data to visualizer bars
+        const step = Math.floor(this.dataArray.length / this.bars.length);
+        
+        for (let i = 0; i < this.bars.length; i++) {
+            const index = i * step;
+            const value = this.dataArray[index];
+            const percent = value / 255;
+            
+            // Adjust height/scale of bars
+            // We use transform for better performance
+            const height = Math.max(4, percent * 44);
+            this.bars[i].style.height = `${height}px`;
+            
+            // Optional: Dynamic opacity based on frequency
+            this.bars[i].style.opacity = 0.4 + (percent * 0.6);
+        }
+
+        if (this.isPlaying) {
+            requestAnimationFrame(() => this.animateVisualizer());
+        }
     }
 
     // Dynamic Background logic
