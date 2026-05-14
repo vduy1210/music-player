@@ -2,6 +2,7 @@
 class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-player');
+        this.audio.crossOrigin = "anonymous"; // Fix CORS for Web Audio API
         this.video = null; // will be initialized later
         this.media = null; // currently active media element (audio or video)
         this.currentTrack = null;
@@ -315,6 +316,7 @@ class MusicPlayer {
         this.dropZone = document.getElementById('drop-zone');
         // Video element (for MP4 / WebM / Ogg video playback)
         this.video = document.getElementById('video-player');
+        if (this.video) this.video.crossOrigin = "anonymous";
         // Album cover element (to hide when playing video)
         this.albumCover = document.querySelector('.album-cover');
         // Playlist elements
@@ -1454,7 +1456,7 @@ class MusicPlayer {
     }
 
     startVisualizer(element) {
-        if (!this.initAudioContext()) return;
+        if (!this.initAudioContext() || this.isYouTube) return;
         
         // Resume context if suspended (browser policy)
         if (this.audioContext.state === 'suspended') {
@@ -1470,6 +1472,8 @@ class MusicPlayer {
                 this.sourceNodes.set(element, source);
             } catch (e) {
                 console.warn('Could not connect audio source:', e);
+                // Fallback: ensure audio is still connected to destination even if analyser fails
+                element.connect && element.connect(this.audioContext.destination);
             }
         }
 
