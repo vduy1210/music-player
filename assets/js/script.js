@@ -21,6 +21,8 @@ class MusicPlayer {
         this.dataArray = null;
         this.sourceNodes = new Map();
         
+        this.authManager = new AuthManager();
+        
         this.initializeElements();
         this.attachEventListeners();
         this.initializeDatabase();
@@ -42,6 +44,8 @@ class MusicPlayer {
             
             if (initialized) {
                 this.useDatabase = true;
+                await this.authManager.initialize(this.dbManager.supabase);
+                this.setupAuthUI();
                 await this.loadTracksFromDatabase();
                 this.setupRealtimeUpdates();
                 console.log('🎵 Database mode enabled');
@@ -1275,7 +1279,172 @@ class MusicPlayer {
     }
 
     openModal() {
+        if (this.useDatabase && (!this.authManager || !this.authManager.isAdmin())) {
+            this.showNotification('🔒 Bạn cần đăng nhập tài khoản Admin để upload nhạc!');
+            this.openAuthModal();
+            return;
+        }
         this.modal.classList.add('active');
+    }
+
+    // === AUTH UI HANDLERS ===
+    setupAuthUI() {
+        const openAuthBtn = document.getElementById('open-auth-btn');
+        const closeAuthModalBtn = document.getElementById('close-auth-modal');
+        const authModal = document.getElementById('auth-modal');
+        const logoutBtn = document.getElementById('logout-btn');
+        const authTabs = document.querySelectorAll('.auth-tab-btn');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+
+        // Open Auth Modal
+        if (openAuthBtn) {
+            openAuthBtn.addEventListener('click', () => this.openAuthModal());
+        }
+
+        // Close Auth Modal
+        if (closeAuthModalBtn) {
+            closeAuthModalBtn.addEventListener('click', () => this.closeAuthModal());
+        }
+        if (authModal) {
+            authModal.addEventListener('click', (e) => {
+                if (e.target === authModal) this.closeAuthModal();
+            });
+        }
+
+        // Logout
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                await this.authManager.signOut();
+                this.showNotification('👋 Đã đăng xuất');
+            });
+        }
+
+        // Tab Switcher (Login / Register)
+        authTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const targetTab = e.target.dataset.tab;
+                authTabs.forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+
+                if (targetTab === 'login') {
+                    if (loginForm) loginForm.classList.add('active');
+                    if (registerForm) registerForm.classList.remove('active');
+                } else {
+                    if (registerForm) registerForm.classList.add('active');
+                    if (loginForm) loginForm.classList.remove('active');
+                }
+            });
+        });
+
+        // Submit Login Form
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value.trim();
+                const password = document.getElementById('login-password').value;
+                const errorEl = document.getElementById('login-error');
+
+                if (errorEl) errorEl.style.display = 'none';
+
+                try {
+                    this.showNotification('⏳ Đang đăng nhập...');
+                    await this.authManager.signIn(email, password);
+                    this.showNotification('✅ Đăng nhập thành công!');
+                    this.closeAuthModal();
+                    loginForm.reset();
+                } catch (err) {
+                    console.error('Login error:', err);
+                    if (errorEl) {
+                        errorEl.textContent = '❌ ' + (err.message || 'Đăng nhập thất bại. Kiểm tra lại email/mật khẩu!');
+                        errorEl.style.display = 'block';
+                    }
+                    this.showNotification('❌ Đăng nhập thất bại');
+                }
+            });
+        }
+
+        // Submit Register Form
+        if (registerForm) {
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('register-name').value.trim();
+                const email = document.getElementById('register-email').value.trim();
+                const password = document.getElementById('register-password').value;
+                const errorEl = document.getElementById('register-error');
+                const successEl = document.getElementById('register-success');
+
+                if (errorEl) errorEl.style.display = 'none';
+                if (successEl) successEl.style.display = 'none';
+
+                try {
+                    this.showNotification('⏳ Đang tạo tài khoản...');
+                    await this.authManager.signUp(email, password, { fullName: name });
+                    
+                    if (successEl) {
+                        successEl.textContent = '🎉 Tạo tài khoản thành công! Đã đăng nhập.';
+                        successEl.style.display = 'block';
+                    }
+                    this.showNotification('🎉 Đăng ký thành công!');
+                    setTimeout(() => {
+                        this.closeAuthModal();
+                        registerForm.reset();
+                    }, 1500);
+                } catch (err) {
+                    console.error('Register error:', err);
+                    if (errorEl) {
+                        errorEl.textContent = '❌ ' + (err.message || 'Tạo tài khoản thất bại!');
+                        errorEl.style.display = 'block';
+                    }
+                    this.showNotification('❌ Đăng ký thất bại');
+                }
+            });
+        }
+
+        // Listen for Auth changes
+        this.authManager.onAuthChange((event, user, isAdmin) => {
+            this.updateAuthUI(user, isAdmin);
+        });
+
+        // Initial UI update
+        this.updateAuthUI(this.authManager.user, this.authManager.isAdmin());
+    }
+
+    openAuthModal() {
+        const authModal = document.getElementById('auth-modal');
+        if (authModal) authModal.classList.add('active');
+    }
+
+    closeAuthModal() {
+        const authModal = document.getElementById('auth-modal');
+        if (authModal) authModal.classList.remove('active');
+    }
+
+    updateAuthUI(user, isAdmin) {
+        const openAuthBtn = document.getElementById('open-auth-btn');
+        const userBadge = document.getElementById('user-badge');
+        const userEmailDisplay = document.getElementById('user-email-display');
+
+        if (user) {
+            if (openAuthBtn) openAuthBtn.style.display = 'none';
+            if (userBadge) userBadge.style.display = 'flex';
+            if (userEmailDisplay) userEmailDisplay.textContent = this.authManager.getUserDisplayName();
+        } else {
+            if (openAuthBtn) openAuthBtn.style.display = 'flex';
+            if (userBadge) userBadge.style.display = 'none';
+        }
+
+        // Show/Hide "+ Add Track" button based on Admin status in Database mode
+        if (this.addTrackBtn) {
+            if (this.useDatabase) {
+                this.addTrackBtn.style.display = isAdmin ? 'block' : 'none';
+            } else {
+                this.addTrackBtn.style.display = 'block';
+            }
+        }
+
+        // Re-render track list so Rename/Delete buttons appear/disappear according to Admin status
+        this.renderTrackList();
     }
 
     closeUploadModal() {
@@ -1494,8 +1663,8 @@ class MusicPlayer {
                 <div class="track-duration">${track.duration}</div>
                 <button class="add-playlist-btn" title="${track.inPlaylist !== false ? 'In Playlist' : 'Add to Playlist'}">${track.inPlaylist !== false ? '✅' : '➕'}</button>
                 <button class="play-track-btn" title="Play">▶</button>
-                ${this.useDatabase ? `<button class="rename-track-btn" title="Rename">✏️</button>` : ''}
-                ${this.useDatabase ? `<button class="delete-track-btn" title="Delete">🗑️</button>` : ''}
+                ${(this.useDatabase && this.authManager && this.authManager.isAdmin()) ? `<button class="rename-track-btn" title="Rename">✏️</button>` : ''}
+                ${(this.useDatabase && this.authManager && this.authManager.isAdmin()) ? `<button class="delete-track-btn" title="Delete">🗑️</button>` : ''}
             `;
             
             trackList.appendChild(trackItem);

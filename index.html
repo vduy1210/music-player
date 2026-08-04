@@ -76,6 +76,14 @@
                 <button class="nav-btn" data-view="youtube">YouTube</button>
                 <button class="nav-btn" data-view="about">About</button>
             </nav>
+            <div class="auth-header-container">
+                <button class="auth-btn login-btn" id="open-auth-btn">🔑 Đăng nhập</button>
+                <div class="user-badge" id="user-badge" style="display: none;">
+                    <span class="user-icon">👤</span>
+                    <span class="user-email" id="user-email-display">User</span>
+                    <button class="logout-btn" id="logout-btn" title="Đăng xuất">🚪</button>
+                </div>
+            </div>
         </header>
 
         <!-- Player View (two-column layout: left video square, right lyrics & up-next) -->
@@ -287,10 +295,60 @@
             </div>
         </main>
 
+        <!-- Auth Modal (Login / Register) -->
+        <div class="modal" id="auth-modal">
+            <div class="modal-content auth-modal-content">
+                <span class="close-modal" id="close-auth-modal">&times;</span>
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn active" data-tab="login">Đăng nhập</button>
+                    <button class="auth-tab-btn" data-tab="register">Đăng ký</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" class="auth-form active">
+                    <h3>Chào mừng trở lại! 🎵</h3>
+                    <p class="auth-subtitle">Đăng nhập tài khoản Admin để quản lý bài hát</p>
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" required placeholder="admin@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Mật khẩu</label>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+                    <div class="auth-error" id="login-error" style="display: none;"></div>
+                    <button type="submit" class="auth-submit-btn">Đăng nhập</button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" class="auth-form">
+                    <h3>Tạo tài khoản mới 🚀</h3>
+                    <p class="auth-subtitle">Tạo tài khoản để trải nghiệm ứng dụng</p>
+                    <div class="form-group">
+                        <label for="register-name">Tên hiển thị</label>
+                        <input type="text" id="register-name" required placeholder="Nguyễn Văn A">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" required placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Mật khẩu</label>
+                        <input type="password" id="register-password" required placeholder="Tối thiểu 6 ký tự">
+                    </div>
+                    <div class="auth-error" id="register-error" style="display: none;"></div>
+                    <div class="auth-success" id="register-success" style="display: none;"></div>
+                    <button type="submit" class="auth-submit-btn">Tạo tài khoản</button>
+                </form>
+            </div>
+        </div>
+
     <!-- Audio Element -->
     <audio id="audio-player"></audio>
     </div>
 
+    <!-- Load Auth Manager -->
+    <script src="assets/js/auth.js?v=1"></script>
     <!-- Load Audio Compressor (ffmpeg.wasm - auto-compress before upload) -->
     <script src="assets/js/audio-compressor.js?v=1"></script>
     <!-- Load Database Manager -->
