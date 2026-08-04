@@ -352,6 +352,21 @@ class MusicPlayer {
             m.addEventListener('timeupdate', (e) => this.updateProgress(e));
             m.addEventListener('loadedmetadata', (e) => this.updateDuration(e));
             m.addEventListener('ended', (e) => this.handleTrackEnd(e));
+            m.addEventListener('error', (e) => this.handleMediaError(e));
+        });
+
+        // Network Status & Auto-reconnection (Offline/Online handling)
+        window.addEventListener('offline', () => {
+            this.showNotification('📡 Mất kết nối internet! Đang chuyển sang chế độ ngoại tuyến.');
+        });
+        window.addEventListener('online', async () => {
+            this.showNotification('🌐 Đã khôi phục kết nối internet!');
+            if (this.useDatabase && this.dbManager) {
+                try {
+                    await this.loadTracksFromDatabase();
+                    this.setupRealtimeUpdates();
+                } catch (e) { /* ignore reconnect error */ }
+            }
         });
         
         // Progress bar - click and drag
@@ -713,6 +728,22 @@ class MusicPlayer {
         } else {
             this.nextTrack();
         }
+    }
+
+    handleMediaError(e) {
+        const track = this.tracks[this.currentTrack];
+        const title = track ? track.title : 'bài hát';
+        console.warn('⚠️ Playback error on track:', title, e);
+        
+        this.showNotification(`⚠️ Không thể phát "${title}". Đang chuyển bài tiếp theo...`);
+        this.pause();
+        
+        // Auto advance after 2s delay
+        setTimeout(() => {
+            if (this.tracks.length > 1) {
+                this.nextTrack();
+            }
+        }, 2000);
     }
 
     loadTrack(index) {
