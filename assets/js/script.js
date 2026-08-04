@@ -1293,9 +1293,7 @@ class MusicPlayer {
         const closeAuthModalBtn = document.getElementById('close-auth-modal');
         const authModal = document.getElementById('auth-modal');
         const logoutBtn = document.getElementById('logout-btn');
-        const authTabs = document.querySelectorAll('.auth-tab-btn');
         const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
 
         // Open Auth Modal
         if (openAuthBtn) {
@@ -1320,23 +1318,6 @@ class MusicPlayer {
             });
         }
 
-        // Tab Switcher (Login / Register)
-        authTabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const targetTab = e.target.dataset.tab;
-                authTabs.forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-
-                if (targetTab === 'login') {
-                    if (loginForm) loginForm.classList.add('active');
-                    if (registerForm) registerForm.classList.remove('active');
-                } else {
-                    if (registerForm) registerForm.classList.add('active');
-                    if (loginForm) loginForm.classList.remove('active');
-                }
-            });
-        });
-
         // Submit Login Form
         if (loginForm) {
             loginForm.addEventListener('submit', async (e) => {
@@ -1350,7 +1331,7 @@ class MusicPlayer {
                 try {
                     this.showNotification('⏳ Đang đăng nhập...');
                     await this.authManager.signIn(email, password);
-                    this.showNotification('✅ Đăng nhập thành công!');
+                    this.showNotification('✅ Đăng nhập Admin thành công!');
                     this.closeAuthModal();
                     loginForm.reset();
                 } catch (err) {
@@ -1360,43 +1341,6 @@ class MusicPlayer {
                         errorEl.style.display = 'block';
                     }
                     this.showNotification('❌ Đăng nhập thất bại');
-                }
-            });
-        }
-
-        // Submit Register Form
-        if (registerForm) {
-            registerForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const name = document.getElementById('register-name').value.trim();
-                const email = document.getElementById('register-email').value.trim();
-                const password = document.getElementById('register-password').value;
-                const errorEl = document.getElementById('register-error');
-                const successEl = document.getElementById('register-success');
-
-                if (errorEl) errorEl.style.display = 'none';
-                if (successEl) successEl.style.display = 'none';
-
-                try {
-                    this.showNotification('⏳ Đang tạo tài khoản...');
-                    await this.authManager.signUp(email, password, { fullName: name });
-                    
-                    if (successEl) {
-                        successEl.textContent = '🎉 Tạo tài khoản thành công! Đã đăng nhập.';
-                        successEl.style.display = 'block';
-                    }
-                    this.showNotification('🎉 Đăng ký thành công!');
-                    setTimeout(() => {
-                        this.closeAuthModal();
-                        registerForm.reset();
-                    }, 1500);
-                } catch (err) {
-                    console.error('Register error:', err);
-                    if (errorEl) {
-                        errorEl.textContent = '❌ ' + (err.message || 'Tạo tài khoản thất bại!');
-                        errorEl.style.display = 'block';
-                    }
-                    this.showNotification('❌ Đăng ký thất bại');
                 }
             });
         }
