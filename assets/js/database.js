@@ -111,17 +111,31 @@ class DatabaseManager {
             throw new Error('Database not initialized');
         }
 
-        const fileExt = file.name.split('.').pop();
+        const rawExt = file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '');
+        const fileExt = rawExt || 'mp3';
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `audio/${fileName}`;
 
-        console.log('📤 Uploading file:', fileName, 'Size:', file.size);
+        // Determine fallback content type if file.type is empty (common on Windows for FLAC/M4A)
+        const mimeTypes = {
+            mp3: 'audio/mpeg',
+            wav: 'audio/wav',
+            ogg: 'audio/ogg',
+            flac: 'audio/flac',
+            aac: 'audio/aac',
+            m4a: 'audio/mp4',
+            mp4: 'video/mp4',
+            webm: 'audio/webm'
+        };
+        const contentType = file.type || mimeTypes[fileExt] || 'audio/mpeg';
+
+        console.log('📤 Uploading file:', fileName, 'Size:', file.size, 'MIME:', contentType);
 
         // First try using Supabase client SDK (recommended for browsers)
-        const filePath = `audio/${fileName}`;
         try {
             const { data: uploadData, error: uploadErr } = await this.supabase.storage
                 .from('music-files')
-                .upload(filePath, file, { contentType: file.type, cacheControl: '3600' });
+                .upload(filePath, file, { contentType: contentType, cacheControl: '3600' });
 
             if (uploadErr) {
                 throw uploadErr;
