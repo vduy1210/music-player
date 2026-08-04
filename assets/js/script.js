@@ -430,6 +430,32 @@ class MusicPlayer {
             });
         }
 
+        // Upload Modal Tabs (File Upload vs Google Drive Import)
+        const uploadTabs = document.querySelectorAll('.upload-tab-btn');
+        uploadTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const targetTab = e.target.dataset.tab;
+                uploadTabs.forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+
+                const fileTab = document.getElementById('upload-file-tab');
+                const driveTab = document.getElementById('upload-drive-tab');
+                if (targetTab === 'file') {
+                    if (fileTab) fileTab.classList.add('active');
+                    if (driveTab) driveTab.classList.remove('active');
+                } else {
+                    if (driveTab) driveTab.classList.add('active');
+                    if (fileTab) fileTab.classList.remove('active');
+                }
+            });
+        });
+
+        // Google Drive Form Submit Handler
+        const driveForm = document.getElementById('drive-url-form');
+        if (driveForm) {
+            driveForm.addEventListener('submit', (e) => this.handleDriveUrlSubmit(e));
+        }
+
         // Background playback: ensure audio keeps playing when tab is hidden / app minimized
         document.addEventListener('visibilitychange', () => {
             if (document.hidden && this.isPlaying) {
@@ -1420,6 +1446,98 @@ class MusicPlayer {
 
         // Re-render track list so Rename/Delete buttons appear/disappear according to Admin status
         this.renderTrackList();
+    }
+
+    // Helper to convert Google Drive share links into direct audio stream URLs
+    convertGoogleDriveUrl(url) {
+        if (!url) return '';
+        const trimmed = url.trim();
+
+        // Match Google Drive file ID pattern
+        const driveFileIdMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+                                 trimmed.match(/id=([a-zA-Z0-9_-]+)/) ||
+                                 trimmed.match(/\/open\?id=([a-zA-Z0-9_-]+)/);
+
+        if (driveFileIdMatch && driveFileIdMatch[1]) {
+            const fileId = driveFileIdMatch[1];
+            // Use Google's direct high-speed audio stream CDN URL
+            const directUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+            console.log(`🔗 Converted Google Drive URL for ID [${fileId}]:`, directUrl);
+            return directUrl;
+        }
+
+        // Return original URL if it's already a direct link
+        return trimmed;
+    }
+
+    // Handle Google Drive / External URL Form Submit
+    async handleDriveUrlSubmit(e) {
+        e.preventDefault();
+        const urlInput = document.getElementById('drive-url');
+        const titleInput = document.getElementById('drive-title');
+        const artistInput = document.getElementById('drive-artist');
+
+        const rawUrl = urlInput ? urlInput.value : '';
+        const title = titleInput ? titleInput.value.trim() : '';
+        const artist = (artistInput && artistInput.value.trim()) ? artistInput.value.trim() : 'Unknown Artist';
+
+        if (!rawUrl || !title) {
+            this.showNotification('⚠️ Vui lòng điền đầy đủ link và tên bài hát!');
+            return;
+        }
+
+        const audioUrl = this.convertGoogleDriveUrl(rawUrl);
+
+        try {
+            this.showNotification('⏳ Đang thêm bài hát vào thư viện...');
+
+            if (this.useDatabase && this.dbManager) {
+                // Save metadata to Supabase DB (0 MB storage consumed!)
+                const trackData = {
+                    title: title,
+                    artist: artist,
+                    duration: '0:00', // Duration auto-detected on playback
+                    audio_url: audioUrl
+                };
+
+                const result = await this.dbManager.addTrack(trackData);
+                
+                this.tracks.push({
+                    id: result.id,
+                    title: title,
+                    artist: artist,
+                    duration: '0:00',
+                    src: audioUrl,
+                    inPlaylist: false
+                });
+            } else {
+                // Local mode
+                this.tracks.push({
+                    title: title,
+                    artist: artist,
+                    duration: '0:00',
+                    src: audioUrl,
+                    inPlaylist: false
+                });
+            }
+
+            this.renderTrackList();
+            this.updateTrackCount();
+            this.showNotification('✅ Đã thêm bài hát từ Google Drive (0 MB Storage)!');
+            
+            // Reset form and close modal
+            const driveForm = document.getElementById('drive-url-form');
+            if (driveForm) driveForm.reset();
+            this.closeUploadModal();
+
+            // Hide empty state
+            const empty = document.getElementById('library-empty');
+            if (empty) empty.style.display = 'none';
+
+        } catch (err) {
+            console.error('Error adding Drive track:', err);
+            this.showNotification('❌ Thêm bài hát thất bại: ' + (err.message || 'Lỗi kết nối'));
+        }
     }
 
     closeUploadModal() {

@@ -201,27 +201,56 @@
                 </div>
             </div>
 
-            <!-- File Upload Modal -->
+            <!-- Add Music Track Modal (File Upload + Google Drive Import) -->
             <div class="modal" id="upload-modal">
                 <div class="modal-content">
                     <span class="close-modal">&times;</span>
-                    <h3>Add Music Track</h3>
-                    <div class="upload-area" id="drop-zone">
-                        <input type="file" id="audio-file" accept="audio/*,video/mp4,video/webm,video/ogg,.mp3,.mp4,.wav,.ogg,.flac,.aac,.m4a,.wma,.webm" multiple style="display: none;">
-                        <label for="audio-file" class="upload-label">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-                            </svg>
-                            <span>Click or drag files here</span>
-                            <small>MP3, MP4, WAV, OGG, FLAC, AAC, M4A, WEBM supported</small>
-                        </label>
-                        <!-- Upload Progress -->
-                        <div class="upload-progress" id="upload-progress" style="display: none;">
-                            <div class="upload-progress-bar">
-                                <div class="upload-progress-fill"></div>
+                    <h3>Thêm bài hát mới</h3>
+                    
+                    <div class="upload-tabs">
+                        <button class="upload-tab-btn active" data-tab="file">📁 Tải file lên</button>
+                        <button class="upload-tab-btn" data-tab="drive">🔗 Link Google Drive / URL</button>
+                    </div>
+
+                    <!-- Tab 1: File Upload -->
+                    <div class="upload-tab-content active" id="upload-file-tab">
+                        <div class="upload-area" id="drop-zone">
+                            <input type="file" id="audio-file" accept="audio/*,video/mp4,video/webm,video/ogg,.mp3,.mp4,.wav,.ogg,.flac,.aac,.m4a,.wma,.webm" multiple style="display: none;">
+                            <label for="audio-file" class="upload-label">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                                </svg>
+                                <span>Nhấp hoặc kéo thả file vào đây</span>
+                                <small>Hỗ trợ MP3, WAV, FLAC, M4A, OGG, WEBM</small>
+                            </label>
+                            <!-- Upload Progress -->
+                            <div class="upload-progress" id="upload-progress" style="display: none;">
+                                <div class="upload-progress-bar">
+                                    <div class="upload-progress-fill"></div>
+                                </div>
+                                <span class="upload-progress-text">Uploading...</span>
                             </div>
-                            <span class="upload-progress-text">Uploading...</span>
                         </div>
+                    </div>
+
+                    <!-- Tab 2: Google Drive / Direct URL Import -->
+                    <div class="upload-tab-content" id="upload-drive-tab">
+                        <form id="drive-url-form" class="drive-url-form">
+                            <div class="form-group">
+                                <label for="drive-url">Link Google Drive hoặc URL bài hát</label>
+                                <input type="url" id="drive-url" required placeholder="https://drive.google.com/file/d/.../view">
+                                <small class="form-help">💡 Lưu ý: Cần bật quyền chia sẻ "Bất kỳ ai có liên kết đều có thể xem" trên Google Drive</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="drive-title">Tên bài hát</label>
+                                <input type="text" id="drive-title" required placeholder="Ví dụ: Cứ Chill Đi">
+                            </div>
+                            <div class="form-group">
+                                <label for="drive-artist">Tên ca sĩ / Tác giả</label>
+                                <input type="text" id="drive-artist" placeholder="Ví dụ: Chillies (Tùy chọn)">
+                            </div>
+                            <button type="submit" class="auth-submit-btn">🚀 Thêm vào thư viện (0 MB Storage)</button>
+                        </form>
                     </div>
                 </div>
             </div>

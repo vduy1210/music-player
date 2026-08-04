@@ -2273,4 +2273,57 @@ nav {
 .auth-submit-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+}
+
+/* Upload Modal Tabs & Drive Form */
+.upload-tabs {
+    display: flex;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+}
+
+.upload-tab-btn {
+    flex: 1;
+    padding: 10px 14px;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.upload-tab-btn.active {
+    background: var(--gradient-1);
+    color: white;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.upload-tab-content {
+    display: none;
+}
+
+.upload-tab-content.active {
+    display: block;
+}
+
+.drive-url-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+}
+
+.form-help {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
 }
