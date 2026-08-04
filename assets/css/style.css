@@ -1939,9 +1939,46 @@ nav {
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
         gap: 12px;
     }
+
+    .auth-header-container {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .user-email {
+        max-width: 120px;
+    }
 }
 
 @media (max-width: 480px) {
+    .container {
+        padding: 8px;
+        padding-bottom: 90px; /* Space for fixed bottom player */
+    }
+
+    header {
+        padding: 12px 14px;
+        border-radius: var(--radius-md);
+    }
+
+    .logo {
+        font-size: 1.2rem;
+    }
+
+    nav {
+        flex-wrap: wrap;
+    }
+
+    .nav-btn {
+        padding: 6px 10px;
+        font-size: 0.78rem;
+    }
+
+    .auth-btn, .user-badge {
+        padding: 6px 12px;
+        font-size: 0.78rem;
+    }
+
     .album-art {
         width: 180px;
         height: 180px;
@@ -1958,25 +1995,90 @@ nav {
     }
 
     .visualizer {
-        height: 36px;
-        margin-top: 14px;
+        height: 32px;
+        margin-top: 12px;
     }
 
     .bar {
-        width: 4px;
+        width: 3px;
     }
 
+    /* Modal Mobile Optimization */
     .modal-content {
-        padding: 24px 18px;
+        padding: 24px 16px;
+        max-height: 85vh;
+        overflow-y: auto;
+        border-radius: var(--radius-lg);
+    }
+
+    .auth-modal-content {
+        width: 95%;
+    }
+
+    .form-group input {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    .auth-submit-btn {
+        padding: 12px;
+        min-height: 44px; /* Mobile touch target */
     }
 
     .upload-area {
-        padding: 28px 16px;
+        padding: 24px 12px;
+    }
+
+    /* Track List Mobile Optimization */
+    .track-item {
+        padding: 10px 8px;
+        gap: 8px;
+    }
+
+    .track-item-info {
+        min-width: 0; /* Enable text ellipsis */
+    }
+
+    .track-item-title {
+        font-size: 0.85rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .track-item-artist {
+        font-size: 0.72rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .track-duration {
+        font-size: 0.72rem;
+    }
+
+    .play-track-btn, .add-playlist-btn, .rename-track-btn, .delete-track-btn {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+        min-width: 32px;
+        min-height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .features {
         grid-template-columns: 1fr;
     }
+}
+
+/* Touch device active state feedback */
+@media (hover: none) {
+    .nav-btn:active, .auth-btn:active, .add-track-btn:active, .control-btn:active {
+        transform: scale(0.96);
+        opacity: 0.9;
+    }
+}
 
     .youtube-grid {
         grid-template-columns: 1fr;
