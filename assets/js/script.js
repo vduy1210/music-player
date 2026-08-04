@@ -1671,6 +1671,17 @@ class MusicPlayer {
     }
 
     startVisualizer(element) {
+        // Detect mobile devices (iOS / Android)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        // On mobile devices, piping audio through Web Audio API (createMediaElementSource)
+        // causes iOS/Android to mute the audio stream when the app goes to background.
+        // On mobile, we skip Web Audio API routing to preserve native background audio!
+        if (isMobile) {
+            this.animateMobileVisualizer();
+            return;
+        }
+
         if (!this.initAudioContext() || this.isYouTube) return;
         
         // Resume context if suspended (browser policy)
@@ -1687,12 +1698,25 @@ class MusicPlayer {
                 this.sourceNodes.set(element, source);
             } catch (e) {
                 console.warn('Could not connect audio source:', e);
-                // Fallback: ensure audio is still connected to destination even if analyser fails
-                element.connect && element.connect(this.audioContext.destination);
             }
         }
 
         this.animateVisualizer();
+    }
+
+    animateMobileVisualizer() {
+        if (!this.isPlaying || !this.bars || this.bars.length === 0) return;
+
+        // Animated bars simulation for mobile without Web Audio API (prevents iOS background mute)
+        for (let i = 0; i < this.bars.length; i++) {
+            const randomHeight = Math.floor(Math.random() * 36) + 4;
+            this.bars[i].style.height = `${randomHeight}px`;
+            this.bars[i].style.opacity = 0.5 + Math.random() * 0.5;
+        }
+
+        if (this.isPlaying) {
+            setTimeout(() => this.animateMobileVisualizer(), 120);
+        }
     }
 
     animateVisualizer() {
@@ -1709,11 +1733,8 @@ class MusicPlayer {
             const percent = value / 255;
             
             // Adjust height/scale of bars
-            // We use transform for better performance
             const height = Math.max(4, percent * 44);
             this.bars[i].style.height = `${height}px`;
-            
-            // Optional: Dynamic opacity based on frequency
             this.bars[i].style.opacity = 0.4 + (percent * 0.6);
         }
 
