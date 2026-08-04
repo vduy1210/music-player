@@ -410,6 +410,19 @@ class MusicPlayer {
                 if (e.key === 'Enter') this.searchYouTube();
             });
         }
+
+        // Background playback: ensure audio keeps playing when tab is hidden / app minimized
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && this.isPlaying) {
+                // Tab went to background while music is playing
+                // Ensure the audio element stays active
+                const active = this.media || this.audio;
+                if (active && active.paused && this.isPlaying) {
+                    // Browser paused the audio when going to background - resume it
+                    active.play().catch(() => { /* ignore autoplay block */ });
+                }
+            }
+        });
     }
 
     loadSampleTracks() {
@@ -479,26 +492,62 @@ class MusicPlayer {
     }
 
     // Media Session API - lock screen / notification controls
+    // This enables background playback controls on mobile (Android notification, iOS lock screen)
     updateMediaSession() {
         if (!('mediaSession' in navigator)) return;
         
         const track = this.tracks[this.currentTrack];
         if (!track) return;
 
-        navigator.mediaSession.metadata = new MediaMetadata({
+        // Set track metadata (shows on lock screen / notification)
+        const metadata = {
             title: track.title,
             artist: track.artist,
             album: 'Music Player'
-        });
+        };
 
+        // Add cover image if available
+        if (track.coverImage) {
+            metadata.artwork = [
+                { src: track.coverImage, sizes: '256x256', type: 'image/jpeg' },
+                { src: track.coverImage, sizes: '512x512', type: 'image/jpeg' }
+            ];
+        }
+
+        navigator.mediaSession.metadata = new MediaMetadata(metadata);
+
+        // Set playback state
+        navigator.mediaSession.playbackState = this.isPlaying ? 'playing' : 'paused';
+
+        // Set action handlers for notification/lock screen controls
         navigator.mediaSession.setActionHandler('play', () => this.play());
         navigator.mediaSession.setActionHandler('pause', () => this.pause());
         navigator.mediaSession.setActionHandler('previoustrack', () => this.previousTrack());
         navigator.mediaSession.setActionHandler('nexttrack', () => this.nextTrack());
         navigator.mediaSession.setActionHandler('seekto', (details) => {
             const active = this.media || this.audio;
-            if (details.seekTime && active && active.duration) {
+            if (details.seekTime != null && active && active.duration) {
                 active.currentTime = details.seekTime;
+                // Update position state immediately after seek
+                try {
+                    navigator.mediaSession.setPositionState({
+                        duration: active.duration,
+                        playbackRate: active.playbackRate || 1,
+                        position: active.currentTime
+                    });
+                } catch (err) { /* ignore */ }
+            }
+        });
+        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+            const active = this.media || this.audio;
+            if (active && active.duration) {
+                active.currentTime = Math.max(0, active.currentTime - (details.seekOffset || 10));
+            }
+        });
+        navigator.mediaSession.setActionHandler('seekforward', (details) => {
+            const active = this.media || this.audio;
+            if (active && active.duration) {
+                active.currentTime = Math.min(active.duration, active.currentTime + (details.seekOffset || 10));
             }
         });
     }
@@ -542,6 +591,11 @@ class MusicPlayer {
             this.vinylRecord.classList.add('playing');
             this.visualizer.classList.add('playing');
             
+            // Update Media Session playback state (important for background playback on mobile)
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
+            }
+            
             // Start Visualizer
             this.startVisualizer(active);
         } else {
@@ -574,6 +628,11 @@ class MusicPlayer {
         this.visualizer.classList.remove('playing');
         if (this.progressInterval) {
             clearInterval(this.progressInterval);
+        }
+        
+        // Update Media Session playback state
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.playbackState = 'paused';
         }
     }
 
@@ -830,6 +889,17 @@ class MusicPlayer {
             const progress = (active.currentTime / active.duration) * 100;
             this.progressFill.style.width = progress + '%';
             this.currentTime.textContent = this.formatTime(active.currentTime);
+            
+            // Update Media Session position state (shows progress on lock screen / notification)
+            if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
+                try {
+                    navigator.mediaSession.setPositionState({
+                        duration: active.duration,
+                        playbackRate: active.playbackRate || 1,
+                        position: active.currentTime
+                    });
+                } catch (err) { /* ignore setPositionState errors */ }
+            }
         }
     }
 
@@ -1220,7 +1290,7 @@ class MusicPlayer {
         this.handleDroppedFiles(files);
     }
 
-    // Upload file to database
+    // Upload file to database (with automatic compression)
     async uploadToDatabase(file) {
         const progressEl = document.getElementById('upload-progress');
         const progressFill = document.querySelector('.upload-progress-fill');
@@ -1230,27 +1300,59 @@ class MusicPlayer {
             // Show progress
             if (progressEl) {
                 progressEl.style.display = 'block';
-                if (progressFill) progressFill.style.width = '20%';
+                if (progressFill) progressFill.style.width = '5%';
                 if (progressText) progressText.textContent = 'Reading file...';
             }
             
-            this.showNotification('⏳ Uploading to database...');
+            this.showNotification('⏳ Processing audio...');
             
-            // Get audio duration first
-            const tempAudio = new Audio(URL.createObjectURL(file));
+            // Get audio duration from original file first
+            const tempUrl = URL.createObjectURL(file);
+            const tempAudio = new Audio(tempUrl);
             await new Promise(resolve => {
                 tempAudio.addEventListener('loadedmetadata', resolve);
             });
             const duration = this.formatTime(tempAudio.duration);
             const fileName = file.name.replace(/\.[^/.]+$/, '');
+            URL.revokeObjectURL(tempUrl);
 
-            if (progressFill) progressFill.style.width = '40%';
+            if (progressFill) progressFill.style.width = '10%';
+
+            // === AUTO COMPRESS ===
+            // Compress large/lossless files to MP3 192kbps before upload
+            let fileToUpload = file;
+            if (!this._audioCompressor) {
+                this._audioCompressor = new AudioCompressor();
+            }
+
+            if (this._audioCompressor.shouldCompress(file)) {
+                const originalSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                if (progressText) progressText.textContent = `Compressing ${originalSizeMB}MB...`;
+                this.showNotification(`🗜️ Compressing ${fileName} (${originalSizeMB}MB)...`);
+
+                fileToUpload = await this._audioCompressor.compress(file, (pct, msg) => {
+                    // Map compression progress (0-100%) to total progress bar (10%-50%)
+                    const totalPct = 10 + Math.round(pct * 0.4);
+                    if (progressFill) progressFill.style.width = totalPct + '%';
+                    if (progressText) progressText.textContent = msg || `Compressing... ${pct}%`;
+                });
+
+                // Show compression result notification
+                if (fileToUpload !== file) {
+                    const newSizeMB = (fileToUpload.size / (1024 * 1024)).toFixed(1);
+                    const reduction = Math.round((1 - fileToUpload.size / file.size) * 100);
+                    this.showNotification(`✅ Compressed: ${originalSizeMB}MB → ${newSizeMB}MB (−${reduction}%)`);
+                }
+            }
+            // === END COMPRESS ===
+
+            if (progressFill) progressFill.style.width = '55%';
             if (progressText) progressText.textContent = 'Uploading audio...';
 
             let audioUrl;
             try {
-                // Try uploading audio file to Supabase Storage
-                audioUrl = await this.dbManager.uploadAudio(file);
+                // Upload (compressed) file to Supabase Storage
+                audioUrl = await this.dbManager.uploadAudio(fileToUpload);
             } catch (storageError) {
                 console.error('❌ Storage upload failed:', storageError.message);
                 this.showNotification('❌ Upload to storage failed: ' + storageError.message);
@@ -1260,7 +1362,7 @@ class MusicPlayer {
                 return;
             }
 
-            if (progressFill) progressFill.style.width = '80%';
+            if (progressFill) progressFill.style.width = '85%';
             if (progressText) progressText.textContent = 'Saving to database...';
 
             // Add track to database (only if we have a valid storage URL)
