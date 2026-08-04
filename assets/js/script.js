@@ -22,6 +22,7 @@ class MusicPlayer {
         this.sourceNodes = new Map();
         
         this.authManager = new AuthManager();
+        this.currentFolderFilter = 'all'; // 'all', 'drive', 'storage'
         
         this.initializeElements();
         this.attachEventListeners();
@@ -455,6 +456,17 @@ class MusicPlayer {
         if (driveForm) {
             driveForm.addEventListener('submit', (e) => this.handleDriveUrlSubmit(e));
         }
+
+        // Folder Filter Buttons (All / Google Drive / Uploaded Storage)
+        const folderBtns = document.querySelectorAll('.folder-filter-btn');
+        folderBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                folderBtns.forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                this.currentFolderFilter = e.currentTarget.dataset.folder;
+                this.renderTrackList();
+            });
+        });
 
         // Background playback: ensure audio keeps playing when tab is hidden / app minimized
         document.addEventListener('visibilitychange', () => {
@@ -1717,20 +1729,34 @@ class MusicPlayer {
         this.play();
     }
 
+    // Helper to check if a track is from Google Drive
+    isDriveTrack(track) {
+        if (!track) return false;
+        const url = (track.src || track.audio_url || '').toLowerCase();
+        return url.includes('googleusercontent.com') || url.includes('drive.google.com') || track.isDrive === true;
+    }
+
     // Render track list in UI
     renderTrackList() {
         const trackList = document.querySelector('.track-list');
         const emptyEl = document.getElementById('library-empty');
         trackList.innerHTML = '';
         
-        // Determine which indices to render (filtered or all)
-        const indicesToRender = this.filteredIndices 
+        // Determine which indices to render (filtered by search and/or folder filter)
+        let indicesToRender = this.filteredIndices 
             ? this.filteredIndices 
             : this.tracks.map((_, i) => i);
         
+        // Apply Folder Filter (All / Google Drive / Storage)
+        if (this.currentFolderFilter === 'drive') {
+            indicesToRender = indicesToRender.filter(i => this.isDriveTrack(this.tracks[i]));
+        } else if (this.currentFolderFilter === 'storage') {
+            indicesToRender = indicesToRender.filter(i => !this.isDriveTrack(this.tracks[i]));
+        }
+
         // Show/hide empty state
         if (emptyEl) {
-            emptyEl.style.display = this.tracks.length === 0 ? 'block' : 'none';
+            emptyEl.style.display = indicesToRender.length === 0 ? 'block' : 'none';
         }
         
         indicesToRender.forEach((realIndex, displayNum) => {
@@ -1747,10 +1773,15 @@ class MusicPlayer {
             trackItem.dataset.artist = track.artist;
             trackItem.dataset.duration = track.duration;
             
+            const isDrive = this.isDriveTrack(track);
+            const badgeHtml = isDrive 
+                ? '<span class="track-source-badge drive">☁️ Drive</span>' 
+                : '<span class="track-source-badge storage">💻 Upload</span>';
+
             trackItem.innerHTML = `
                 <div class="track-number">${displayNum + 1}</div>
                 <div class="track-item-info">
-                    <div class="track-item-title">${track.title}</div>
+                    <div class="track-item-title">${track.title} ${badgeHtml}</div>
                     <div class="track-item-artist">${track.artist}</div>
                 </div>
                 <div class="track-duration">${track.duration}</div>
